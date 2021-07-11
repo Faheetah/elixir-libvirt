@@ -9,10 +9,10 @@ defmodule Libvirt.RPC do
   https://libvirt.org/git/?p=libvirt.git;a=blob_plain;f=src/remote/remote_protocol.x;hb=HEAD
 
   ```
-  iex(1)> {:ok, socket} = Libvirt.RPC.start_link("colosseum.sudov.im")
+  iex(1)> {:ok, socket} = Libvirt.RPC.start_link("host.example.com")
   {:ok, #PID<0.466.0>}
   iex(2)> Libvirt.RPC.Call.connect_get_hostname(socket)
-  {:ok, %{"hostname" => "colosseum"}}
+  {:ok, %{"hostname" => "host"}}
   ```
   """
 
