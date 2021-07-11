@@ -22,7 +22,8 @@ defmodule Libvirt.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:nimble_parsec, "~> 1.1"}
+      {:nimble_parsec, "~> 1.1"},
+      {:certifi, ">= 2.7.0"}
     ]
   end
 end
