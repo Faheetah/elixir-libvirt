@@ -30,9 +30,12 @@ defmodule Libvirt.Volume do
   end
 
   def download(socket, volume, dest) do
-    false = File.exists?(dest)
-    Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
-    get_data(dest)
+    if File.exists?(dest) do
+      {:error, "file exists"}
+    else
+      Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
+      get_data(dest)
+    end
   end
 
   def get_data(dest) do
