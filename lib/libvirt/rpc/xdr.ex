@@ -23,7 +23,7 @@ defmodule Libvirt.RPC.XDR do
       Enum.reduce(spec, {%{}, payload}, fn arg, {acc, rest} ->
         translated =
           try do
-            translate(:decode, arg, payload)
+            translate(:decode, arg, rest)
           rescue
             # specifically for encode/decode errors
             error in ArgumentError ->
@@ -78,7 +78,7 @@ defmodule Libvirt.RPC.XDR do
         {_, val, rest} = translate(:decode, [type, name], rest)
         {[val | values], rest}
       end)
-    {name, val, rest}
+    {name, Enum.reverse(val), rest}
   end
 
   def translate(:decode, ["char", name], <<int::32, rest::binary>>), do: {name, int, rest}
