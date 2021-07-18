@@ -1,5 +1,5 @@
 defmodule Libvirt.RPC.CallGenerator do
-  @moduledoc false
+  @moduledoc "Generate calls"
 
   require Libvirt.RPC.CallParser
 
@@ -57,29 +57,23 @@ defmodule Libvirt.RPC.CallGenerator do
       quote do
         @doc """
         Calls #{unquote(name)} using Libvirt RPC
+
+        Arg spec
+
+        ```
+        #{inspect unquote(arg_spec), pretty: true}
+        ```
+
+        Return spec
+
+        ```
+        #{inspect unquote(return_spec), pretty: true}
+        ```
         """
         unquote(spec)
         def unquote(name)(socket, payload) do
-          payload = Libvirt.RPC.XDR.encode(payload, unquote(arg_spec))
-
-          packet = %Libvirt.RPC.Packet{
-            # program is hard coded for Libvirt
-            program: 0x20008086,
-            # so is version
-            version: 1,
-            procedure: unquote(id),
-            type: 0,
-            serial: 0,
-            status: 0,
-            payload: payload
-          }
-          Libvirt.RPC.send(socket, packet, unquote(stream_type))
-          |> case do
-            {:ok, payload} ->
-              {:ok, Libvirt.RPC.XDR.decode(payload, unquote(return_spec))}
-            error ->
-              error
-          end
+          payload_data = Libvirt.RPC.XDR.encode(payload, unquote(arg_spec))
+          do_procedure(socket, unquote(id), unquote(stream_type), unquote(return_spec), payload_data)
         end
       end
 
@@ -87,26 +81,22 @@ defmodule Libvirt.RPC.CallGenerator do
       quote do
         @doc """
         Calls #{unquote(name)} using Libvirt RPC
+
+        Arg spec
+
+        ```
+        nil
+        ```
+
+        Return spec
+
+        ```
+        #{inspect unquote(return_spec), pretty: true}
+        ```
         """
         unquote(spec)
         def unquote(name)(socket) do
-          packet = %Libvirt.RPC.Packet{
-            # program is hard coded for Libvirt
-            program: 0x20008086,
-            # so is version
-            version: 1,
-            procedure: unquote(id),
-            type: 0,
-            serial: 0,
-            status: 0
-          }
-          Libvirt.RPC.send(socket, packet, unquote(stream_type))
-          |> case do
-            {:ok, payload} ->
-              {:ok, Libvirt.RPC.XDR.decode(payload, unquote(return_spec))}
-            error ->
-              error
-          end
+          do_procedure(socket, unquote(id), unquote(stream_type), unquote(return_spec))
         end
       end
     end
@@ -135,8 +125,7 @@ defmodule Libvirt.RPC.CallGenerator do
       end
     end
 
-    generated_procedures =
-      Enum.map(procedures, &(generate_procedure(&1, structs)))
+    generated_procedures = Enum.map(procedures, &(generate_procedure(&1, structs)))
 
     generated_structs ++ [not_found_generated_struct] ++ generated_procedures
   end
