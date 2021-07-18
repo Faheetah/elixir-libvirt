@@ -19,10 +19,10 @@ defmodule Libvirt.RPC.RemoteAsset do
         path
       ])
 
-      sslOpts = [verify: :verify_peer, cacertfile: :certifi.cacertfile()]
+      ssl_opts = [verify: :verify_peer, cacertfile: :certifi.cacertfile()]
 
       :inets.start()
-      {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {url, []}, [ssl: sslOpts], [])
+      {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {url, []}, [ssl: ssl_opts], [])
 
       body = to_string(body)
       File.write!(cache_path, body)
