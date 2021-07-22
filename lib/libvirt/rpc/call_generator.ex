@@ -3,9 +3,6 @@ defmodule Libvirt.RPC.CallGenerator do
 
   require Libvirt.RPC.CallParser
 
-  @readstreams [201, 209, 211, 296]
-  @writestreams [148, 208, 215]
-
   @doc "Generate RPC calls into the module"
   defmacro generate(version) do
     remote_protocol_data = fetch_remote_protocol_data(version)
@@ -53,9 +50,7 @@ defmodule Libvirt.RPC.CallGenerator do
     Enum.map(procedures, &(generate_procedure(&1, structs)))
   end
 
-  defp generate_procedure([name, id], structs) do
-    stream_type = get_stream_type(id)
-
+  defp generate_procedure([stream_type, name, id], structs) do
     base_name =
       name
       |> String.trim_leading("REMOTE_PROC_")
@@ -92,12 +87,11 @@ defmodule Libvirt.RPC.CallGenerator do
     end
   end
 
-  defp get_stream_type(id) do
-    cond do
-      Enum.member?(@readstreams, id) -> :read
-      Enum.member?(@writestreams, id) -> :write
-      true -> nil
-    end
+  # @todo invert this, call_parser should be able to better format with stream types
+  # also might check for the more explicit @writestream: 1 instead of "writestream"
+  # then tag that with :readstream or :writestream, but this works for now
+  defp generate_procedure([name, id], structs) do
+    generate_procedure([nil, name, id], structs)
   end
 
   defp get_fields_for_call(structs, call_name, suffix) do

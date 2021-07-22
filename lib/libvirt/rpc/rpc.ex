@@ -43,7 +43,7 @@ defmodule Libvirt.RPC do
   end
 
   @impl true
-  def handle_cast({:receive, :read}, state) do
+  def handle_cast({:receive, "readstream"}, state) do
     {:ok, <<size::32>>} = :gen_tcp.recv(state.socket, 4)
     {:ok, rest} = :gen_tcp.recv(state.socket, size - 4)
 
@@ -51,13 +51,19 @@ defmodule Libvirt.RPC do
 
     {:ok, caller, new_state} =
       if packet.type != 3 or packet.payload != nil do
-        GenServer.cast(self(), {:receive, :read})
+        GenServer.cast(self(), {:receive, "readstream"})
         get_caller(state, packet.serial)
       else
         get_and_remove_caller(state, packet.serial)
       end
 
-    GenServer.reply(caller, packet.payload)
+    # If caller is no longer registered, throw away the messages
+    # There is no recovering at this point anyway
+    # There might be a way to tell the TCP server we died though
+    if caller != nil do
+      GenServer.reply(caller, packet.payload)
+    end
+
     {:noreply, new_state}
   end
 
@@ -71,7 +77,25 @@ defmodule Libvirt.RPC do
     {:noreply, new_state}
   end
 
-  # @todo implement stream_type = :read
+  # @todo implement stream_type = "readstream"
+  # we do send_request, what we should return is a way to receive that
+  # probably instead of :noreply we should reply with a receiver
+  # for simple sends this would be a way to get a direct result
+  # but for streams, it should be a stream resource
+  # and maybe the same can apply to writing, but that might be at the
+  # send level, inverted here, where if RPC.send receives a stream
+  # then that is assumed to be the payload that needs to stream in
+
+  # no, we need to kick off the send, then the receive returns either
+  # the packet we were wanting, or a stream object that will further
+  # receive messages, basically a lambda that will continue the work
+
+  # okay, so a problem with this is it will block, I really am starting to think
+  # the solution is one connection per request, let the client create
+  # a session and close it (or have some way to close it automatically)
+
+  # pooling might help too since a bad consumer would only get itself stuck
+  # but other consumers would power through
   @impl true
   def handle_call({:send, packet, stream_type}, from, state) do
     new_state = add_caller(state, from)
@@ -101,8 +125,10 @@ defmodule Libvirt.RPC do
   end
 
   defp get_caller(%{requests: requests} = state, serial) do
-    {client, _} = requests[serial]
-    {:ok, client, state}
+    case requests[serial] do
+      {client, _} -> {:ok, client, state}
+      nil -> {:ok, nil, state}
+    end
   end
 
   defp get_and_remove_caller(%{requests: requests} = state, serial) do

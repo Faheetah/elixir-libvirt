@@ -24,8 +24,24 @@ defmodule Libvirt.RPC.CallParser do
     |> ignore()
     |> ignore(string("*/"))
 
+  maybe_stream_comment =
+    ignore(string("/*"))
+    |> optional(ignore(string("*")))
+    |> concat(ignore_whitespace)
+    |> repeat(
+      lookahead_not(string("*/"))
+      |> choice([
+        string("writestream"),
+        string("readstream"),
+        ignore(utf8_char([]))
+      ])
+    )
+    |> ignore(string("*/"))
+    |> concat(ignore_whitespace)
+
   procedure =
-    utf8_string([?A..?Z, ?0..?9, ?_], min: 1)
+    optional(maybe_stream_comment)
+    |> utf8_string([?A..?Z, ?0..?9, ?_], min: 1)
     |> ignore(whitespace)
     |> ignore(string("="))
     |> ignore(whitespace)
@@ -36,7 +52,7 @@ defmodule Libvirt.RPC.CallParser do
   remote_procedures =
     ignore(string("enum remote_procedure {"))
     |> repeat(
-      choice([ignore_comment, ignore_whitespace, procedure])
+      choice([ignore_whitespace, procedure, ignore_comment])
     )
     |> ignore(string("}"))
 

@@ -41,6 +41,40 @@ defmodule Libvirt.RPC.CallParserTest do
           procedure: ["REMOTE_PROC_CONNECT_CLOSE", 2]
         ]
     end
+
+    test "procedure with readstream" do
+      code = """
+      enum remote_procedure {
+        /**
+        * @generate: both
+        * @readstream: 1
+        * @sparseflag: VIR_STORAGE_VOL_DOWNLOAD_SPARSE_STREAM
+        * @acl: storage_vol:data_read
+        */
+        REMOTE_PROC_STORAGE_VOL_DOWNLOAD = 209,
+      }
+      """
+
+      {:ok, parsed, _, _, _, _} = CallParser.parse(code)
+      assert parsed == [{:procedure, ["readstream", "REMOTE_PROC_STORAGE_VOL_DOWNLOAD", 209]}]
+    end
+
+    test "procedure with writestream" do
+      code = """
+      enum remote_procedure {
+        /**
+        * @generate: both
+        * @writestream: 1
+        * @sparseflag: VIR_STORAGE_VOL_UPLOAD_SPARSE_STREAM
+        * @acl: storage_vol:data_write
+        */
+        REMOTE_PROC_STORAGE_VOL_UPLOAD = 208,
+      }
+      """
+
+      {:ok, parsed, _, _, _, _} = CallParser.parse(code)
+      assert parsed == [{:procedure, ["writestream", "REMOTE_PROC_STORAGE_VOL_UPLOAD", 208]}]
+    end
   end
 
   def get_structs(code) do
