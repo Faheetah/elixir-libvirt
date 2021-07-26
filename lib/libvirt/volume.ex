@@ -26,7 +26,8 @@ defmodule Libvirt.Volume do
 
   def download!(socket, volume, dest) do
     File.rm(dest)
-    download(socket, volume, dest)
+    Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
+    get_data(dest)
   end
 
   def download(socket, volume, dest) do
