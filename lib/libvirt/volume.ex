@@ -39,7 +39,7 @@ defmodule Libvirt.Volume do
     end
   end
 
-  def get_data(dest) do
+  defp get_data(dest) do
     receive do
       {_, nil} -> :ok
       {_, payload} ->

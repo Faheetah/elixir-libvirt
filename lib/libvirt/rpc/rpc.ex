@@ -54,6 +54,7 @@ defmodule Libvirt.RPC do
         GenServer.cast(self(), {:receive, "readstream"})
         get_caller(state, packet.serial)
       else
+        IO.inspect state
         get_and_remove_caller(state, packet.serial)
       end
 
@@ -111,7 +112,8 @@ defmodule Libvirt.RPC do
   end
 
   @impl true
-  def handle_info({:tcp_closed, _port}, state) do
+  def handle_info({:tcp_closed, _port}, %{socket: socket} = state) do
+    Libvirt.RPC.Call.connect_close(socket)
     {:noreply, %{state | socket: nil}}
   end
 
@@ -132,6 +134,7 @@ defmodule Libvirt.RPC do
   end
 
   defp get_and_remove_caller(%{requests: requests} = state, serial) do
+    # IO.inspect {requests, serial}
     {client, ref} = requests[serial]
     Process.demonitor(ref)
     {:ok, client, %{state | requests: Map.delete(requests, serial)}}
