@@ -46,7 +46,7 @@ defmodule Libvirt.RPC.Call do
       version: 1,
       procedure: id,
       type: 0,
-      serial: 0,
+      serial: 1,
       status: 0,
       payload: payload
     }

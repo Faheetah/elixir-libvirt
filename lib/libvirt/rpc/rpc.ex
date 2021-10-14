@@ -17,10 +17,13 @@ defmodule Libvirt.RPC do
   """
 
   use GenServer
+  require Logger
 
   alias Libvirt.RPC.Packet
 
   @tcp_port 16_509
+  @call_type %{0 => "call", 1 => "reply", 2 => "event", 3 => "stream"}
+  @call_status %{0 => "ok", 1 => "error", 2 => "continue"}
 
   def send(pid, packet, stream_type) do
     GenServer.call(pid, {:send, packet, stream_type})
@@ -57,6 +60,8 @@ defmodule Libvirt.RPC do
         get_and_remove_caller(state, packet.serial)
       end
 
+    # Logger.debug("#{inspect self()}:#{inspect elem(caller, 0)}:#{packet.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Call.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect packet.payload}")
+
     # If caller is no longer registered, throw away the messages
     # There is no recovering at this point anyway
     # There might be a way to tell the TCP server we died though
@@ -73,6 +78,7 @@ defmodule Libvirt.RPC do
     {:ok, rest} = :gen_tcp.recv(state.socket, size - 4)
     {result, packet} = Packet.decode(<<size::32>> <> rest)
     {:ok, caller, new_state} = get_and_remove_caller(state, packet.serial)
+    Logger.debug("#{inspect self()}:#{inspect elem(caller, 0)}:#{packet.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Call.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect packet.payload}")
     GenServer.reply(caller, {result, packet.payload})
     {:noreply, new_state}
   end
@@ -98,6 +104,7 @@ defmodule Libvirt.RPC do
   # but other consumers would power through
   @impl true
   def handle_call({:send, packet, stream_type}, from, state) do
+    Logger.debug("#{inspect self()}:#{inspect elem(from, 0)}:#{state.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Call.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect packet.payload}")
     new_state = add_caller(state, from)
     # @todo if the server receives an incomplete response, it will hang
     # need to find a way to ensure a full request is sent or fail
@@ -133,7 +140,6 @@ defmodule Libvirt.RPC do
   end
 
   defp get_and_remove_caller(%{requests: requests} = state, serial) do
-    # IO.inspect {requests, serial}
     {client, ref} = requests[serial]
     Process.demonitor(ref)
     {:ok, client, %{state | requests: Map.delete(requests, serial)}}

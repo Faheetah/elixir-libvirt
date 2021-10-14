@@ -8,7 +8,7 @@ defmodule Libvirt.RPC.CallGenerator do
     remote_protocol_data = fetch_remote_protocol_data(version)
     structs = filter_types(remote_protocol_data, :struct)
     procs = filter_types(remote_protocol_data, :procedure)
-    gen_structs(structs) ++ [not_found_struct()] ++ gen_procs(procs, structs)
+    gen_structs(structs) ++ [not_found_struct()] ++ gen_procs(procs, structs) ++ gen_translations(procs)
   end
 
   defp fetch_remote_protocol_data(version) do
@@ -22,6 +22,26 @@ defmodule Libvirt.RPC.CallGenerator do
     remote_protocol_data
     |> Stream.filter(fn {tag, _struct} -> tag == type end)
     |> Enum.map(fn {_tag, struct} -> struct end)
+  end
+
+  defp gen_translations(procs) do
+    procs
+    |> Enum.map(fn proc ->
+      [name, id] =
+        case proc do
+          [_, name, id] -> [name, id]
+          p -> p
+        end
+      name =
+        name
+        |> String.trim_leading("REMOTE_PROC_")
+        |> String.downcase()
+
+      quote do
+        @doc "#{unquote(id)} -> #{unquote(name)}"
+        def proc_to_name(unquote(id)), do: unquote(name)
+      end
+    end)
   end
 
   defp gen_structs(structs) do
