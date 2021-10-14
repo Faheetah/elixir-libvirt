@@ -14,14 +14,14 @@ defmodule Libvirt.RPC.XDRTest do
 
     test "integer" do
       spec = [["unsigned", "int", "int"]]
-      assert XDR.decode(<<255, 255, 255, 255>>, spec) == %{"int" => 4294967295}
+      assert XDR.decode(<<255, 255, 255, 255>>, spec) == %{"int" => 4_294_967_295}
       assert XDR.decode(<<0, 0, 0, 0>>, spec) == %{"int" => 0}
-      assert XDR.decode(<<1, 1, 1, 1>>, spec) == %{"int" => 16843009}
+      assert XDR.decode(<<1, 1, 1, 1>>, spec) == %{"int" => 16_843_009}
     end
 
     test "hyper" do
       spec = [["unsigned", "hyper", "hyper"]]
-      assert XDR.decode(<<255, 255, 255, 255, 255, 255, 255, 255>>, spec) == %{"hyper" => 18446744073709551615}
+      assert XDR.decode(<<255, 255, 255, 255, 255, 255, 255, 255>>, spec) == %{"hyper" => 18_446_744_073_709_551_615}
     end
 
     test "array of strings with int" do

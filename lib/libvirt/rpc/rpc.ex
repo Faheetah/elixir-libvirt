@@ -54,7 +54,6 @@ defmodule Libvirt.RPC do
         GenServer.cast(self(), {:receive, "readstream"})
         get_caller(state, packet.serial)
       else
-        IO.inspect state
         get_and_remove_caller(state, packet.serial)
       end
 
