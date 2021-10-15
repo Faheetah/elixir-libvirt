@@ -8,7 +8,7 @@ defmodule Libvirt.RPC.CallGenerator do
     remote_protocol_data = fetch_remote_protocol_data(version)
     structs = filter_types(remote_protocol_data, :struct)
     procs = filter_types(remote_protocol_data, :procedure)
-    gen_structs(structs) ++ [not_found_struct()] ++ gen_procs(procs, structs) ++ gen_translations(procs)
+    gen_procs(procs, structs) ++ gen_translations(procs)
   end
 
   defp fetch_remote_protocol_data(version) do
@@ -46,7 +46,7 @@ defmodule Libvirt.RPC.CallGenerator do
 
   defp gen_structs(structs) do
     structs
-    |> Enum.filter(fn s ->
+    |> Stream.filter(fn s ->
       !String.ends_with?(s[:name], "_args") and !String.ends_with?(s[:name], "_ret")
     end)
     |> Enum.map(fn struct ->
@@ -56,14 +56,6 @@ defmodule Libvirt.RPC.CallGenerator do
         end
       end
     end)
-  end
-
-  defp not_found_struct() do
-    quote do
-      def get_struct(_) do
-        {:error, :notfound}
-      end
-    end
   end
 
   defp gen_procs(procedures, structs) do
@@ -119,3 +111,4 @@ defmodule Libvirt.RPC.CallGenerator do
     struct[:fields]
   end
 end
+

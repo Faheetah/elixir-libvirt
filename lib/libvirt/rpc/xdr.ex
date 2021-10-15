@@ -182,7 +182,7 @@ defmodule Libvirt.RPC.XDR do
   end
 
   def translate(:encode, [name, field], payload) do
-    case Libvirt.RPC.Call.get_struct(name) do
+    case Libvirt.RPC.Structs.get_struct(name) do
       {:error, :notfound} ->
         {:error, "struct #{name} not found"}
 
@@ -194,7 +194,7 @@ defmodule Libvirt.RPC.XDR do
   end
 
   def translate(:decode, [name | _spec], payload) do
-    case Libvirt.RPC.Call.get_struct(name) do
+    case Libvirt.RPC.Structs.get_struct(name) do
       {:error, :notfound} ->
         {:error, "struct #{name} not found"}
 
