@@ -53,7 +53,7 @@ defmodule Libvirt.RPC.Backends.Shared do
     {:ok, packet} = Packet.decode(<<size::32>> <> rest)
 
     {:ok, caller, new_state} =
-      if packet.type != 3 or packet.payload != nil do
+      if packet.type == 3 and packet.payload != nil do
         GenServer.cast(self(), {:receive, "readstream"})
         get_caller(state, packet.serial)
       else
