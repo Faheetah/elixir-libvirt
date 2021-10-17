@@ -48,8 +48,8 @@ defmodule Libvirt.RPC.Spec do
     ]
   end
 
-  def build_ret_spec(nil, nil), do: nil
-  def build_ret_spec(nil, _), do: @stream_type
+  def build_ret_spec(nil, "readstream"), do: @stream_type
+  def build_ret_spec(nil, _), do: nil
   def build_ret_spec(fields, "readstream") do
     {build_ret_spec(fields, nil), build_ret_spec(nil, "readstream")}
   end

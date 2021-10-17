@@ -1,6 +1,5 @@
+Logger.configure(level: :info)
 hv = "colosseum.sudov.im"
-
-{:ok, persistent} = Libvirt.Hypervisor.connect(hv)
 
 vol = %{
   "key" => "/home/main/libvirt/test/user-data.yaml",
@@ -15,36 +14,17 @@ big_vol = %{
 }
 Benchee.run(
   %{
-    "persistent" => fn ->
-      Libvirt.Network.list_all(persistent)
+    "Libvirt.Network.list_all" => fn ->
+      Libvirt.RPC.Backends.Direct.connect!(hv)
+      |> Libvirt.Network.list_all()
     end,
-    "separate" => fn ->
-      {:ok, transient} = Libvirt.RPC.start_link(hv)
-      Libvirt.Network.list_all(transient)
+    "Libvirt.Volume.download! small" => fn ->
+      Libvirt.RPC.Backends.Direct.connect!(hv)
+      |> Libvirt.Volume.download!(vol, "/dev/null")
     end,
-  }
-)
-
-Benchee.run(
-  %{
-    "download persistent" => fn ->
-      Libvirt.Volume.download!(persistent, vol, "/dev/null")
+    "Libvirt.Volume.Download! big download separate" => fn ->
+      Libvirt.RPC.Backends.Direct.connect!(hv)
+      |> Libvirt.Volume.download!(big_vol, "/dev/null")
     end,
-    "download separate" => fn ->
-      {:ok, transient} = Libvirt.RPC.start_link(hv)
-      Libvirt.Volume.download!(transient, vol, "/dev/null")
-    end,
-  }
-)
-
-Benchee.run(
-  %{
-    "big download persistent" => fn ->
-      Libvirt.Volume.download!(persistent, big_vol, "/dev/null")
-    end,
-    "big download separate" => fn ->
-      {:ok, transient} = Libvirt.RPC.start_link(hv)
-      Libvirt.Volume.download!(transient, big_vol, "/dev/null")
-    end,
-  }
+  }, parallel: 8
 )
