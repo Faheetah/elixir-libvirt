@@ -38,7 +38,7 @@ defmodule Libvirt.RPC.Call do
   require Libvirt.RPC.CallGenerator
   Libvirt.RPC.CallGenerator.generate("6.0.0")
 
-  defp do_procedure(socket, id, stream_type, return_spec, payload \\ nil) do
+  defp do_procedure(socket, id, stream_type, return_spec, payload \\ nil, writestream \\ nil) do
     packet = %Libvirt.RPC.Packet{
       # program is hard coded for Libvirt
       program: 0x20008086,
@@ -50,8 +50,17 @@ defmodule Libvirt.RPC.Call do
       status: 0,
       payload: payload
     }
-    Libvirt.RPC.send(socket, packet, stream_type)
-    |> receive_data(return_spec)
+    case stream_type do
+      nil ->
+        Libvirt.RPC.send(socket, packet, stream_type)
+        |> receive_data(return_spec)
+
+      "readstream" ->
+        Libvirt.RPC.send(socket, packet, stream_type)
+
+      "writestream" ->
+        Libvirt.RPC.send(socket, packet, stream_type)
+    end
   end
 
   defp receive_data({:ok, payload}, return_spec) do

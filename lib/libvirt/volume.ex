@@ -27,7 +27,6 @@ defmodule Libvirt.Volume do
   def download!(socket, volume, dest) do
     File.rm(dest)
     Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
-    get_data(dest)
   end
 
   def download(socket, volume, dest) do
@@ -35,16 +34,20 @@ defmodule Libvirt.Volume do
       {:error, "file exists"}
     else
       Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
-      get_data(dest)
     end
   end
 
-  defp get_data(dest) do
-    receive do
-      {_, nil} -> :ok
-      {_, payload} ->
-        File.write(dest, payload, [:append])
-        get_data(dest)
+  # need to implement feeding the streem into the upload
+  def upload!(socket, volume, dest) do
+    stream = File.open(dest)
+    Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
+  end
+
+  def uplaod(socket, volume, dest) do
+    if File.exists?(dest) do
+      {:error, "file exists"}
+    else
+      Libvirt.RPC.Call.storage_vol_download(socket, %{"vol" => volume, "offset" => 0, "length" => 0, "flags" => 0})
     end
   end
 end

@@ -8,13 +8,14 @@ defmodule Libvirt.RPC.CallGenerator do
     remote_protocol_data = fetch_remote_protocol_data(version)
     structs = filter_types(remote_protocol_data, :struct)
     procs = filter_types(remote_protocol_data, :procedure)
-    gen_procs(procs, structs) ++ gen_translations(procs)
+    gen_procs(procs, structs)
   end
 
   defp fetch_remote_protocol_data(version) do
     {:ok, remote_protocol_data, _, _, _, _} =
       Libvirt.RPC.RemoteAsset.fetch(version, "src/remote/remote_protocol.x")
       |> Libvirt.RPC.CallParser.parse()
+
     remote_protocol_data
   end
 
@@ -24,42 +25,8 @@ defmodule Libvirt.RPC.CallGenerator do
     |> Enum.map(fn {_tag, struct} -> struct end)
   end
 
-  defp gen_translations(procs) do
-    procs
-    |> Enum.map(fn proc ->
-      [name, id] =
-        case proc do
-          [_, name, id] -> [name, id]
-          p -> p
-        end
-      name =
-        name
-        |> String.trim_leading("REMOTE_PROC_")
-        |> String.downcase()
-
-      quote do
-        @doc "#{unquote(id)} -> #{unquote(name)}"
-        def proc_to_name(unquote(id)), do: unquote(name)
-      end
-    end)
-  end
-
-  defp gen_structs(structs) do
-    structs
-    |> Stream.filter(fn s ->
-      !String.ends_with?(s[:name], "_args") and !String.ends_with?(s[:name], "_ret")
-    end)
-    |> Enum.map(fn struct ->
-      quote do
-        def get_struct("remote_#{unquote(struct[:name])}") do
-          {:ok, unquote(struct[:fields])}
-        end
-      end
-    end)
-  end
-
   defp gen_procs(procedures, structs) do
-    Enum.map(procedures, &(generate_procedure(&1, structs)))
+    Enum.map(procedures, &generate_procedure(&1, structs))
   end
 
   defp generate_procedure([stream_type, name, id], structs) do
@@ -73,27 +40,73 @@ defmodule Libvirt.RPC.CallGenerator do
 
     name = String.to_atom(base_name)
 
-    spec = Libvirt.RPC.Spec.generate(name, arg_spec, return_spec)
+    spec = Libvirt.RPC.Spec.generate(name, arg_spec, return_spec, stream_type)
+
     if arg_spec do
-      quote do
-        @doc """
-        Calls #{unquote(name)} using Libvirt RPC
-        """
-        unquote(spec)
-        def unquote(name)(socket, payload) do
-          payload_data = Libvirt.RPC.XDR.encode(payload, unquote(arg_spec))
-          do_procedure(socket, unquote(id), unquote(stream_type), unquote(return_spec), payload_data)
+      if stream_type == "writestream" do
+        quote do
+          @doc """
+          Calls #{unquote(name)} using Libvirt RPC
+
+          Consumes a Stream type as the source to send to the Libvirt server, i.e. File.open/2
+          """
+          unquote(spec)
+
+          def unquote(name)(socket, payload, stream) do
+            payload_data = Libvirt.RPC.XDR.encode(payload, unquote(arg_spec))
+
+            do_procedure(
+              socket,
+              unquote(id),
+              unquote(stream_type),
+              unquote(return_spec),
+              payload_data,
+              stream
+            )
+          end
+        end
+      else
+        quote do
+          @doc """
+          Calls #{unquote(name)} using Libvirt RPC
+          """
+          unquote(spec)
+
+          def unquote(name)(socket, payload) do
+            payload_data = Libvirt.RPC.XDR.encode(payload, unquote(arg_spec))
+
+            do_procedure(
+              socket,
+              unquote(id),
+              unquote(stream_type),
+              unquote(return_spec),
+              payload_data
+            )
+          end
         end
       end
-
     else
-      quote do
-        @doc """
-        Calls #{unquote(name)} using Libvirt RPC
-        """
-        unquote(spec)
-        def unquote(name)(socket) do
-          do_procedure(socket, unquote(id), unquote(stream_type), unquote(return_spec))
+      if stream_type == "writestream" do
+        quote do
+          @doc """
+          Calls #{unquote(name)} using Libvirt RPC
+          """
+          unquote(spec)
+
+          def unquote(name)(socket, stream) do
+            do_procedure(socket, unquote(id), unquote(stream_type), unquote(return_spec), stream)
+          end
+        end
+      else
+        quote do
+          @doc """
+          Calls #{unquote(name)} using Libvirt RPC
+          """
+          unquote(spec)
+
+          def unquote(name)(socket) do
+            do_procedure(socket, unquote(id), unquote(stream_type), unquote(return_spec))
+          end
         end
       end
     end
@@ -111,4 +124,3 @@ defmodule Libvirt.RPC.CallGenerator do
     struct[:fields]
   end
 end
-
