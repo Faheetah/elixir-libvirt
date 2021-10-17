@@ -1,43 +1,59 @@
 defmodule Libvirt.RPC.Spec do
   @moduledoc false
 
-  def generate(function_name, nil, ret_spec) do
+  @stream_type {{:., [], [{:__aliases__, [alias: false], [:Enumerable]}, :t]}, [], []}
+
+  def generate(function_name, arg_spec, ret_spec, stream_type) do
     {:@, [], [
       {:spec, [], [
         {:"::", [], [
           {
             function(function_name),
             [],
-            [
-              pid()
-            ]
+            # either of
+            # [pid()]
+            # [pid(), {:fun, [], []}]
+            # [pid(), %{...}]
+            # [pid(), %{...}, {:fun, [], []}]
+            build_arg_spec(arg_spec, stream_type)
           },
-          build_spec(ret_spec)
+          # either of:
+          # nil
+          # {:fun, [], []}
+          # %{...}
+          # [%{...}, {fun, [], []}]
+          build_ret_spec(ret_spec, stream_type)
         ]}
       ]}
     ]}
   end
 
-  def generate(function_name, arg_spec, ret_spec) do
-    {:@, [], [
-      {:spec, [], [
-        {:"::", [], [
-          {
-            function(function_name),
-            [],
-            [
-              pid(),
-              build_spec(arg_spec)
-            ]
-          },
-          build_spec(ret_spec)
-        ]}
-      ]}
-    ]}
+  def build_arg_spec(nil, nil), do: [pid()]
+  def build_arg_spec(nil, _), do: [pid(), @stream_type]
+  def build_arg_spec(fields, "writestream") do
+    [
+      pid(),
+      fields
+      |> Enum.map(&map_fields/1)
+      |> then(fn f -> {:%{}, [], f} end),
+      @stream_type
+    ]
+  end
+  def build_arg_spec(fields, _) do
+    [
+      pid(),
+      fields
+      |> Enum.map(&map_fields/1)
+      |> then(fn f -> {:%{}, [], f} end)
+    ]
   end
 
-  def build_spec(nil), do: nil
-  def build_spec(fields) do
+  def build_ret_spec(nil, nil), do: nil
+  def build_ret_spec(nil, _), do: @stream_type
+  def build_ret_spec(fields, "readstream") do
+    {build_ret_spec(fields, nil), build_ret_spec(nil, "readstream")}
+  end
+  def build_ret_spec(fields, _) do
     fields
     |> Enum.map(&map_fields/1)
     |> then(fn f -> {:%{}, [], f} end)
