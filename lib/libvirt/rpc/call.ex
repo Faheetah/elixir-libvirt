@@ -59,7 +59,7 @@ defmodule Libvirt.RPC.Call do
         Libvirt.RPC.send(socket, packet, stream_type)
 
       "writestream" ->
-        Libvirt.RPC.send(socket, packet, stream_type)
+        Libvirt.RPC.send(socket, packet, stream_type, writestream)
     end
   end
 
