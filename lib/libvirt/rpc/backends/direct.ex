@@ -1,4 +1,6 @@
 defmodule Libvirt.RPC.Backends.Direct do
+  @moduledoc "A simple client, akin to an HTTP client, does not pool connections"
+
   require Logger
 
   alias Libvirt.RPC.Packet

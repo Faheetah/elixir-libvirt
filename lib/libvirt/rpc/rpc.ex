@@ -1,4 +1,6 @@
 defmodule Libvirt.RPC do
+  @moduledoc "RPC top level code to delegate to backends"
+
   def start_link(host, name \\ nil) do
     backend = Application.get_env(:libvirt, :rpc) |> Keyword.get(:backend)
     backend.start_link(host, name)
