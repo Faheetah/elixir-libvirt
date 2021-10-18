@@ -4,6 +4,11 @@ defmodule Libvirt.RPC do
     backend.start_link(host, name)
   end
 
+  def connect(host) do
+    backend = Application.get_env(:libvirt, :rpc) |> Keyword.get(:backend)
+    backend.connect(host)
+  end
+
   def send(pid, payload, stream_type) do
     backend = Application.get_env(:libvirt, :rpc) |> Keyword.get(:backend)
     backend.send(pid, payload, stream_type)

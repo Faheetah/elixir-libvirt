@@ -11,7 +11,7 @@ defmodule Libvirt.RPC.Backends.Shared do
   ```
   iex(1)> {:ok, socket} = Libvirt.RPC.start_link("host.example.com")
   {:ok, #PID<0.466.0>}
-  iex(2)> Libvirt.RPC.Call.connect_get_hostname(socket)
+  iex(2)> Libvirt.connect_get_hostname(socket)
   {:ok, %{"hostname" => "host"}}
   ```
   """
@@ -31,7 +31,7 @@ defmodule Libvirt.RPC.Backends.Shared do
 
   def start_link(host, name \\ nil) do
     {:ok, socket} = GenServer.start_link(__MODULE__, %{host: to_charlist(host), socket: nil, serial: 1, requests: %{}}, name: name)
-    Libvirt.RPC.Call.connect_open(socket, %{"name" => "", "flags" => 0})
+    Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
     {:ok, socket}
   end
 
@@ -119,7 +119,7 @@ defmodule Libvirt.RPC.Backends.Shared do
 
   @impl true
   def handle_info({:tcp_closed, _port}, %{socket: socket} = state) do
-    Libvirt.RPC.Call.connect_close(socket)
+    Libvirt.connect_close(socket)
     {:noreply, %{state | socket: nil}}
   end
 

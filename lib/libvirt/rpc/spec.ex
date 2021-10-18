@@ -103,7 +103,7 @@ defmodule Libvirt.RPC.Spec do
   def field(["opaque", name]), do: {name, quote(do: [String.t()])}
 
   # @todo spec these out better
-  # they should not be hard coded, but there is a catch22 that we can't use Libvirt.RPC.Call.get_struct/1
+  # they should not be hard coded, but there is a catch22 that we can't use Libvirt.get_struct/1
   # because it doesn't exist yet
   def field(["remote_typed_param", name]) do
     {name, quote(do:
