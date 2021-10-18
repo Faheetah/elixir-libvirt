@@ -35,30 +35,30 @@ defmodule Libvirt.Domain do
   end
 
   def list_all(socket) do
-    Libvirt.RPC.Call.connect_list_all_domains(socket, %{"need_results" => 1, "flags" => 0})
+    Libvirt.connect_list_all_domains(socket, %{"need_results" => 1, "flags" => 0})
   end
 
   def get_xml(socket, domain) do
-    Libvirt.RPC.Call.domain_get_xml_desc(socket, %{"dom" => domain, "flags" => 0})
+    Libvirt.domain_get_xml_desc(socket, %{"dom" => domain, "flags" => 0})
   end
 
   def define(socket, xml) do
-    Libvirt.RPC.Call.domain_define_xml(socket, %{"xml" => xml})
+    Libvirt.domain_define_xml(socket, %{"xml" => xml})
   end
 
   def start(socket, domain) do
-    Libvirt.RPC.Call.domain_create(socket, %{"dom" => domain})
+    Libvirt.domain_create(socket, %{"dom" => domain})
   end
 
   def stop(socket, domain) do
-    Libvirt.RPC.Call.domain_destroy(socket, %{"dom" => domain})
+    Libvirt.domain_destroy(socket, %{"dom" => domain})
   end
 
   def undefine(socket, domain) do
-    Libvirt.RPC.Call.domain_undefine(socket, %{"dom" => domain})
+    Libvirt.domain_undefine(socket, %{"dom" => domain})
   end
 
   def get_info(socket, domain) do
-    Libvirt.RPC.Call.domain_get_info(socket, %{"dom" => domain})
+    Libvirt.domain_get_info(socket, %{"dom" => domain})
   end
 end
