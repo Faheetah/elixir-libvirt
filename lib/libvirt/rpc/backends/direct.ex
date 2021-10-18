@@ -28,13 +28,18 @@ defmodule Libvirt.RPC.Backends.Direct do
     :ok = :gen_tcp.send(socket, Packet.encode_packet(packet))
     {:ok, <<size::32>>} = :gen_tcp.recv(socket, 4)
     {:ok, rest} = :gen_tcp.recv(socket, size - 4)
-    {:ok, packet} = Packet.decode(<<size::32>> <> rest)
 
-    Logger.debug(
-      "#{inspect(socket)}:1:#{@call_type[packet.type]}:#{packet.size}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect(packet.payload)}"
-    )
+    case Packet.decode(<<size::32>> <> rest) do
+      {:ok, packet} ->
+        Logger.debug(
+          "#{inspect(socket)}:1:#{@call_type[packet.type]}:#{packet.size}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect(packet.payload)}"
+        )
 
-    {:ok, packet.payload}
+        {:ok, packet.payload}
+
+      x ->
+        x
+    end
   end
 
   def send(socket, packet, "readstream") do
