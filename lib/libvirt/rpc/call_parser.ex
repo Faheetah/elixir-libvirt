@@ -2,6 +2,7 @@ defmodule Libvirt.RPC.CallParser do
   @moduledoc false
 
   import NimbleParsec
+
   # https://github.com/libvirt/libvirt/blob/c8238579fb0b1c3affbd77749ae2b2c4dfafb2d6/src/remote/remote_protocol.x#L455
 
   @space 0x0020
@@ -51,9 +52,7 @@ defmodule Libvirt.RPC.CallParser do
 
   remote_procedures =
     ignore(string("enum remote_procedure {"))
-    |> repeat(
-      choice([ignore_whitespace, procedure, ignore_comment])
-    )
+    |> repeat(choice([ignore_whitespace, procedure, ignore_comment]))
     |> ignore(string("}"))
 
   const =
@@ -70,13 +69,11 @@ defmodule Libvirt.RPC.CallParser do
       lookahead_not(string(";"))
       |> choice([
         ignore_whitespace,
-
         utf8_string([?a..?z, ?_], min: 1)
         |> ignore(string("<"))
         |> utf8_string([?A..?Z, ?_], min: 1)
         |> ignore(string(">"))
         |> tag(:list),
-
         utf8_string([?a..?z, ?A..?Z, ?_], min: 1)
       ])
     )
@@ -100,8 +97,9 @@ defmodule Libvirt.RPC.CallParser do
     |> tag(repeat(struct_value), :fields)
     |> tag(:struct)
 
-  defparsec :parse,
+  defparsec(
+    :parse,
     choice([remote_procedures, struct, const, ignore(utf8_char([]))])
     |> repeat()
-
+  )
 end

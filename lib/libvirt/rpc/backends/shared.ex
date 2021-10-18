@@ -30,7 +30,13 @@ defmodule Libvirt.RPC.Backends.Shared do
   end
 
   def start_link(host, name \\ nil) do
-    {:ok, socket} = GenServer.start_link(__MODULE__, %{host: to_charlist(host), socket: nil, serial: 1, requests: %{}}, name: name)
+    {:ok, socket} =
+      GenServer.start_link(
+        __MODULE__,
+        %{host: to_charlist(host), socket: nil, serial: 1, requests: %{}},
+        name: name
+      )
+
     Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
     {:ok, socket}
   end
@@ -78,7 +84,11 @@ defmodule Libvirt.RPC.Backends.Shared do
     {:ok, rest} = :gen_tcp.recv(state.socket, size - 4)
     {result, packet} = Packet.decode(<<size::32>> <> rest)
     {:ok, caller, new_state} = get_and_remove_caller(state, packet.serial)
-    Logger.debug("#{inspect self()}:#{inspect elem(caller, 0)}:#{packet.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect packet.payload}")
+
+    Logger.debug(
+      "#{inspect(self())}:#{inspect(elem(caller, 0))}:#{packet.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect(packet.payload)}"
+    )
+
     GenServer.reply(caller, {result, packet.payload})
     {:noreply, new_state}
   end
@@ -104,7 +114,10 @@ defmodule Libvirt.RPC.Backends.Shared do
   # but other consumers would power through
   @impl true
   def handle_call({:send, packet, stream_type}, from, state) do
-    Logger.debug("#{inspect self()}:#{inspect elem(from, 0)}:#{state.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect packet.payload}")
+    Logger.debug(
+      "#{inspect(self())}:#{inspect(elem(from, 0))}:#{state.serial}:#{@call_type[packet.type]}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect(packet.payload)}"
+    )
+
     new_state = add_caller(state, from)
     # @todo if the server receives an incomplete response, it will hang
     # need to find a way to ensure a full request is sent or fail
@@ -114,7 +127,12 @@ defmodule Libvirt.RPC.Backends.Shared do
   end
 
   def handle_info({:DOWN, _, :process, client, _}, %{requests: requests} = state) do
-    {:noreply, %{state | requests: Map.delete(requests, Enum.filter(requests, fn _, {pid, _} -> pid == client end))}}
+    {:noreply,
+     %{
+       state
+       | requests:
+           Map.delete(requests, Enum.filter(requests, fn _, {pid, _} -> pid == client end))
+     }}
   end
 
   @impl true

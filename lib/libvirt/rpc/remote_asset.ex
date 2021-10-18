@@ -14,10 +14,11 @@ defmodule Libvirt.RPC.RemoteAsset do
     else
       File.mkdir_p!(Path.dirname(cache_path))
 
-      url = Path.join([
-        "https://gitlab.com/libvirt/libvirt/-/raw/v#{version}",
-        path
-      ])
+      url =
+        Path.join([
+          "https://gitlab.com/libvirt/libvirt/-/raw/v#{version}",
+          path
+        ])
 
       ssl_opts = [verify: :verify_peer, cacertfile: :certifi.cacertfile()]
 

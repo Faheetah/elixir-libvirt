@@ -15,6 +15,7 @@ defmodule Libvirt.RPC.StructGenerator do
     {:ok, remote_protocol_data, _, _, _, _} =
       Libvirt.RPC.RemoteAsset.fetch(version, "src/remote/remote_protocol.x")
       |> Libvirt.RPC.CallParser.parse()
+
     remote_protocol_data
   end
 
@@ -46,4 +47,3 @@ defmodule Libvirt.RPC.StructGenerator do
     end
   end
 end
-

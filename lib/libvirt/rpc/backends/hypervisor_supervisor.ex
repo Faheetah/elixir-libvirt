@@ -18,7 +18,9 @@ defmodule Libvirt.RPC.Backends.HypervisorSupervisor do
   def start_child(name) do
     case Registry.lookup(HypervisorRegistry, name) do
       [] ->
-        {:ok, pid} = DynamicSupervisor.start_child(__MODULE__, {Libvirt.RPC.Backends.Shared, name})
+        {:ok, pid} =
+          DynamicSupervisor.start_child(__MODULE__, {Libvirt.RPC.Backends.Shared, name})
+
         Registry.register(HypervisorRegistry, name, pid)
         {:ok, pid}
 
@@ -27,7 +29,10 @@ defmodule Libvirt.RPC.Backends.HypervisorSupervisor do
           {:ok, pid}
         else
           Registry.unregister(HypervisorRegistry, name)
-          {:ok, pid} = DynamicSupervisor.start_child(__MODULE__, {Libvirt.RPC.Backends.Shared, name})
+
+          {:ok, pid} =
+            DynamicSupervisor.start_child(__MODULE__, {Libvirt.RPC.Backends.Shared, name})
+
           Registry.register(HypervisorRegistry, name, pid)
           {:ok, pid}
         end
@@ -36,7 +41,9 @@ defmodule Libvirt.RPC.Backends.HypervisorSupervisor do
 
   def terminate_child(name) do
     case Registry.lookup(HypervisorRegistry, name) do
-      [] -> {:error, :not_found}
+      [] ->
+        {:error, :not_found}
+
       [{_, pid}] ->
         Registry.unregister(HypervisorRegistry, name)
         DynamicSupervisor.terminate_child(__MODULE__, pid)

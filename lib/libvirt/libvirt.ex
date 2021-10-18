@@ -59,6 +59,7 @@ defmodule Libvirt do
       status: 0,
       payload: payload
     }
+
     case stream_type do
       nil ->
         Libvirt.RPC.send(socket, packet, stream_type)

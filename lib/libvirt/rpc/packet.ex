@@ -28,12 +28,36 @@ defmodule Libvirt.RPC.Packet do
 
   payload - Optional, raw payload data
   """
-  def encode_packet(%__MODULE__{program: program, version: version, procedure: procedure, type: type, serial: serial, status: status, payload: nil}) do
+  def encode_packet(%__MODULE__{
+        program: program,
+        version: version,
+        procedure: procedure,
+        type: type,
+        serial: serial,
+        status: status,
+        payload: nil
+      }) do
     # a payload of "" will add no additional bits to the packet
-    encode_packet(%__MODULE__{program: program, version: version, procedure: procedure, type: type, serial: serial, status: status, payload: ""})
+    encode_packet(%__MODULE__{
+      program: program,
+      version: version,
+      procedure: procedure,
+      type: type,
+      serial: serial,
+      status: status,
+      payload: ""
+    })
   end
 
-  def encode_packet(%__MODULE__{program: program, version: version, procedure: procedure, type: type, serial: serial, status: status, payload: payload}) do
+  def encode_packet(%__MODULE__{
+        program: program,
+        version: version,
+        procedure: procedure,
+        type: type,
+        serial: serial,
+        status: status,
+        payload: payload
+      }) do
     # (field size * num of fields) + size of payload
     size = 28 + byte_size(payload)
 
@@ -49,7 +73,10 @@ defmodule Libvirt.RPC.Packet do
     >>
   end
 
-  def decode(<<size::32, program::32, version::32, procedure::32, type::32, serial::32, status::32, payload::binary>>) do
+  def decode(
+        <<size::32, program::32, version::32, procedure::32, type::32, serial::32, status::32,
+          payload::binary>>
+      ) do
     %__MODULE__{
       size: size,
       program: program,
@@ -63,7 +90,9 @@ defmodule Libvirt.RPC.Packet do
     |> decode_on_type()
   end
 
-  def decode(<<size::32, program::32, version::32, procedure::32, type::32, serial::32, status::32>>) do
+  def decode(
+        <<size::32, program::32, version::32, procedure::32, type::32, serial::32, status::32>>
+      ) do
     %__MODULE__{
       size: size,
       program: program,
@@ -76,7 +105,8 @@ defmodule Libvirt.RPC.Packet do
     |> decode_on_type()
   end
 
-  def decode(packet), do: {:error, "Unable to decode packet: #{inspect packet, limit: :infinity}"}
+  def decode(packet),
+    do: {:error, "Unable to decode packet: #{inspect(packet, limit: :infinity)}"}
 
   def decode_on_type(%__MODULE__{status: status, payload: payload} = packet) do
     decoded_payload =
@@ -96,7 +126,9 @@ defmodule Libvirt.RPC.Packet do
     end
   end
 
-  def decode_error(<<error::32, _domain::32, _::32, size::32, message::binary - size(size), _rest::binary>>) do
+  def decode_error(
+        <<error::32, _domain::32, _::32, size::32, message::binary-size(size), _rest::binary>>
+      ) do
     {error_key, _} = Libvirt.RPC.Error.vir_error_number(error)
     {:error, "#{error_key}: #{message}"}
   end
