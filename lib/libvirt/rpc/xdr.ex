@@ -2,6 +2,7 @@ defmodule Libvirt.RPC.XDR do
   @moduledoc false
 
   def encode(nil, _), do: nil
+
   def encode(payload, spec) do
     Enum.map(spec, fn arg ->
       try do
@@ -10,6 +11,7 @@ defmodule Libvirt.RPC.XDR do
         # specifically for encode/decode errors
         error in ArgumentError ->
           reraise format_error(arg, payload, error), __STACKTRACE__
+
         error in FunctionClauseError ->
           reraise format_error(arg, payload, error), __STACKTRACE__
       end
@@ -18,6 +20,7 @@ defmodule Libvirt.RPC.XDR do
   end
 
   def decode(nil, _), do: nil
+
   def decode(payload, spec) do
     {result, ""} =
       Enum.reduce(spec, {%{}, payload}, fn arg, {acc, rest} ->
@@ -28,20 +31,24 @@ defmodule Libvirt.RPC.XDR do
             # specifically for encode/decode errors
             error in ArgumentError ->
               reraise format_error(arg, payload, error), __STACKTRACE__
+
             error in FunctionClauseError ->
               reraise format_error(arg, rest, error), __STACKTRACE__
           end
+
         case translated do
-          {:error, error} -> throw "#{error}, translate failed on #{inspect arg}"
+          {:error, error} -> throw("#{error}, translate failed on #{inspect(arg)}")
           {name, val, rest} -> {Map.merge(acc, %{name => val}), rest}
         end
       end)
+
     result
   end
 
   def format_error(args, payload, original_error) do
     # might not work for {:list, list}, fix that when we get to it
-    IO.puts "Warning: if the following output does not display accurately, fix xdr.ex:43"
+    IO.puts("Warning: if the following output does not display accurately, fix xdr.ex:43")
+
     bad_args =
       args
       |> Enum.map(&("\"" <> &1 <> "\""))
@@ -56,12 +63,15 @@ defmodule Libvirt.RPC.XDR do
 
     original_error = Exception.format(:error, original_error)
 
-    Enum.join([
+    Enum.join(
+      [
         "Error decoding spec:",
         "      spec:\n        [#{bad_args}]",
         "      payload:\n#{payload_string}",
         "#{original_error}"
-      ], "\n\n")
+      ],
+      "\n\n"
+    )
   end
 
   # a nil is a nil regardless of type
@@ -72,16 +82,18 @@ defmodule Libvirt.RPC.XDR do
   end
 
   def translate(:decode, [type, {:list, [name, _max]}], <<count::32, items::binary>>) do
+    # 1..count because count includes itself, a count of 55 will include 54 total list elements
     {val, rest} =
-      # 1..count because count includes itself, a count of 55 will include 54 total list elements
       Enum.reduce(1..count, {[], items}, fn _, {values, rest} ->
         {_, val, rest} = translate(:decode, [type, name], rest)
         {[val | values], rest}
       end)
+
     {name, Enum.reverse(val), rest}
   end
 
   def translate(:decode, ["char", name], <<int::32, rest::binary>>), do: {name, int, rest}
+
   def translate(:decode, ["unsigned", "char", name], <<int::32, rest::binary>>) do
     {name, int, rest}
   end
@@ -89,44 +101,61 @@ defmodule Libvirt.RPC.XDR do
   def translate(:encode, ["int", name], map) do
     <<map[name]::integer-size(32)>>
   end
+
   def translate(:decode, ["int", name], <<int::32, rest::binary>>), do: {name, int, rest}
-  def translate(:decode, ["unsigned", "short", name], <<int::32, rest::binary>>), do: {name, int, rest}
+
+  def translate(:decode, ["unsigned", "short", name], <<int::32, rest::binary>>),
+    do: {name, int, rest}
 
   def translate(:encode, ["unsigned", "int", name], map) do
     int = map[name]
+
     if int <= 4_294_967_295 and int >= 0 do
       <<int::unsigned-integer-size(32)>>
     else
       {:error, "unsigned integer must be 32 bit and non negative"}
     end
   end
-  def translate(:decode, ["unsigned", "int", name], <<int::32, rest::binary>>), do: {name, int, rest}
+
+  def translate(:decode, ["unsigned", "int", name], <<int::32, rest::binary>>),
+    do: {name, int, rest}
 
   # hyper is a double long int
   def translate(:encode, ["unsigned", "hyper", name], map) do
     int = map[name]
+
     if int <= 18_446_744_073_709_551_615 and int >= 0 do
       <<int::unsigned-integer-size(64)>>
     else
       {:error, "unsigned hyper must be 64 bit and non negative"}
     end
   end
-  def translate(:decode, ["unsigned", "hyper", name], <<int::64, rest::binary>>), do: {name, int, rest}
 
-  def translate(:encode, ["remote_nonnull_string", name], str), do: translate(:encode, ["remote_string", name], str)
-  def translate(:decode, ["remote_nonnull_string", name], str), do: translate(:decode, ["remote_string", name], str)
+  def translate(:decode, ["unsigned", "hyper", name], <<int::64, rest::binary>>),
+    do: {name, int, rest}
+
+  def translate(:encode, ["remote_nonnull_string", name], str),
+    do: translate(:encode, ["remote_string", name], str)
+
+  def translate(:decode, ["remote_nonnull_string", name], str),
+    do: translate(:decode, ["remote_string", name], str)
 
   def translate(:decode, ["remote_string", name], <<0, 0, 0, 0>>), do: {name, "", <<>>}
 
   def translate(:encode, ["remote_string", name], map) do
     case map[name] do
-      nil -> <<0, 0, 0, 1, 0, 0, 0, 0>>
-      "" -> <<0, 0, 0, 1, 0, 0, 0, 0>>
+      nil ->
+        <<0, 0, 0, 1, 0, 0, 0, 0>>
+
+      "" ->
+        <<0, 0, 0, 1, 0, 0, 0, 0>>
+
       str ->
         str_size = byte_size(str)
         # there was a bug here, that 0,0,0,0 gets appended if the string is a multiple of 4 bytes
         # work around by just checking if 32 directly, but this could be cleaner
         padding = 32 - Integer.mod(bit_size(str), 32)
+
         if padding == 32 do
           <<str_size::32>> <> str
         else
@@ -134,11 +163,13 @@ defmodule Libvirt.RPC.XDR do
         end
     end
   end
+
   def translate(:decode, ["remote_string", name], <<size::32, rest::binary>>) do
-    padding = case rem(size, 4) do
-      0 -> 0
-      rem -> (4 - rem) * 8
-    end
+    padding =
+      case rem(size, 4) do
+        0 -> 0
+        rem -> (4 - rem) * 8
+      end
 
     <<string::binary-size(size), _padding::size(padding), rest::binary>> = rest
     {name, string, rest}
@@ -157,15 +188,26 @@ defmodule Libvirt.RPC.XDR do
   # 123e4567-e89b-12d3-a456-426614174000
   def translate(:decode, ["remote_uuid", name], <<_uuid::128, rest::binary>> = uuid) do
     <<
-      a::8, b::8, c::8, d::8,
-      e::8, f::8,
-      g::8, h::8,
-      i::8, j::8,
-      k::8, l::8, m::8, n::8, o::8, p::8,
+      a::8,
+      b::8,
+      c::8,
+      d::8,
+      e::8,
+      f::8,
+      g::8,
+      h::8,
+      i::8,
+      j::8,
+      k::8,
+      l::8,
+      m::8,
+      n::8,
+      o::8,
+      p::8,
       _rest::binary
     >> = uuid
 
-    parsed=
+    parsed =
       [a, b, c, d, "-", e, f, "-", g, h, "-", i, j, "-", k, l, m, n, o, p]
       |> Enum.map(fn i ->
         if is_integer(i) do
@@ -176,13 +218,13 @@ defmodule Libvirt.RPC.XDR do
           i
         end
       end)
-    |> List.to_string()
+      |> List.to_string()
 
     {name, parsed, rest}
   end
 
   def translate(:encode, [name, field], payload) do
-    case Libvirt.RPC.Call.get_struct(name) do
+    case Libvirt.RPC.Structs.get_struct(name) do
       {:error, :notfound} ->
         {:error, "struct #{name} not found"}
 
@@ -194,7 +236,7 @@ defmodule Libvirt.RPC.XDR do
   end
 
   def translate(:decode, [name | _spec], payload) do
-    case Libvirt.RPC.Call.get_struct(name) do
+    case Libvirt.RPC.Structs.get_struct(name) do
       {:error, :notfound} ->
         {:error, "struct #{name} not found"}
 
@@ -204,10 +246,11 @@ defmodule Libvirt.RPC.XDR do
             {name, val, rest} = translate(:decode, arg, rest)
             {Map.merge(acc, %{name => val}), rest}
           end)
+
         {name, parsed, rest}
     end
   end
 
-  def translate(:encode, unknown, _payload), do: throw "Unknown type: #{inspect unknown}"
-  def translate(:decode, unknown, _payload), do: throw "Unknown type: #{inspect unknown}"
+  def translate(:encode, unknown, _payload), do: throw("Unknown type: #{inspect(unknown)}")
+  def translate(:decode, unknown, _payload), do: throw("Unknown type: #{inspect(unknown)}")
 end

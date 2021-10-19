@@ -31,7 +31,9 @@ defmodule Libvirt.Pool do
     </pool>
     """
 
-    {:ok, %{"remote_nonnull_storage_pool" => pool}} = Call.storage_pool_define_xml(socket, %{"xml" => xml, "flags" => 0})
+    {:ok, %{"remote_nonnull_storage_pool" => pool}} =
+      Call.storage_pool_define_xml(socket, %{"xml" => xml, "flags" => 0})
+
     Call.storage_pool_build(socket, %{"pool" => pool, "flags" => 0})
     Call.storage_pool_create(socket, %{"pool" => pool, "flags" => 0})
     pool

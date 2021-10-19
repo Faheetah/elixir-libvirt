@@ -1,30 +1,21 @@
-IO.puts "connecting"
-{:ok, socket} = Libvirt.Hypervisor.connect("colosseum.sudov.im")
+File.rm_rf!("images/")
+File.mkdir_p!("images/")
 
-IO.puts "downloading"
-# small test 1kb
-Libvirt.Volume.download!(socket, %{ "key" => "/home/main/libvirt/test/user-data.yaml", "name" => "user-data.yaml", "pool" => "test"}, "user-data.yaml")
-# medium test 300kb
-Libvirt.Volume.download!(socket, %{ "key" => "/home/main/libvirt/test/cidata.iso", "name" => "cidata.iso", "pool" => "test"}, "cidata.iso")
-# large test 1.3gb
-Libvirt.Volume.download(socket, %{ "key" => "/home/main/libvirt/test/test.img", "name" => "test.img", "pool" => "test"}, "test.img")
+IO.puts "downloading 1kb file"
+Libvirt.RPC.Backends.Direct.connect!("colosseum.sudov.im")
+|> Libvirt.Volume.download(%{"key" => "/home/main/libvirt/test/user-data.yaml", "name" => "user-data.yaml", "pool" => "test"})
+|> Enum.each(fn f -> IO.inspect f end)
 
-# IO.puts "uploading"
-# name = Libvirt.UUID.gen_string()
-# Libvirt.Volume.upload(
-#   socket,
-#   %{"key" => "/home/main/libvirt/test/#{name}", "name" => name, "pool" => "pool1"},
-#   "user-data.yaml"
-# )
+IO.puts "downloading 300kb file"
+Libvirt.RPC.Backends.Direct.connect!("colosseum.sudov.im")
+|> Libvirt.Volume.download(%{"key" => "/home/main/libvirt/test/cidata.iso", "name" => "cidata.iso", "pool" => "test"})
+|> Enum.each(fn f -> IO.inspect f end)
 
-# Libvirt.RPC.get_state(socket)
-# name = Libvirt.UUID.gen_string()
-# Libvirt.Volume.upload(
-#   socket,
-#   %{"key" => "/home/main/libvirt/test/#{name}", "name" => name, "pool" => "pool1"},
-#   "cidata.iso"
-# )
+# too much spam
+Logger.configure(level: :info)
 
-# IO.puts "final genserver state:"
-# Libvirt.RPC.get_state(socket)
-# |> IO.inspect
+IO.puts "downloading 1.3gb file"
+Libvirt.RPC.Backends.Direct.connect!("colosseum.sudov.im")
+|> Libvirt.Volume.download(%{"key" => "/home/main/libvirt/test/test.img", "name" => "test.img", "pool" => "test"}, file: "images/test.img")
+
+Logger.configure(level: :debug)

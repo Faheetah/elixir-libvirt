@@ -35,11 +35,12 @@ defmodule Libvirt.RPC.CallParserTest do
     test "multiple procs" do
       {:ok, parsed, _, _, _, _} = CallParser.parse(@proc)
       procedures = Enum.filter(parsed, fn {type, _val} -> type == :procedure end)
+
       assert procedures ==
-        [
-          procedure: ["REMOTE_PROC_CONNECT_OPEN", 1],
-          procedure: ["REMOTE_PROC_CONNECT_CLOSE", 2]
-        ]
+               [
+                 procedure: ["REMOTE_PROC_CONNECT_OPEN", 1],
+                 procedure: ["REMOTE_PROC_CONNECT_CLOSE", 2]
+               ]
     end
 
     test "procedure with readstream" do
@@ -93,13 +94,12 @@ defmodule Libvirt.RPC.CallParserTest do
       structs = get_structs(code)
 
       assert structs == [
-        struct: [
-          name: "domain_backup_get_xml_desc_ret",
-          fields: [["remote_nonnull_string", "xml"]]
-        ]
-      ]
+               struct: [
+                 name: "domain_backup_get_xml_desc_ret",
+                 fields: [["remote_nonnull_string", "xml"]]
+               ]
+             ]
     end
-
 
     test "remote_connect_supports_feature_args - basic struct" do
       code = """
@@ -111,11 +111,11 @@ defmodule Libvirt.RPC.CallParserTest do
       structs = get_structs(code)
 
       assert structs == [
-        struct: [
-          name: "connect_supports_feature_args",
-          fields: [["int", "feature"]]
-        ]
-      ]
+               struct: [
+                 name: "connect_supports_feature_args",
+                 fields: [["int", "feature"]]
+               ]
+             ]
     end
 
     test "remote_connect_open_args - struct with comments" do
@@ -132,11 +132,11 @@ defmodule Libvirt.RPC.CallParserTest do
       structs = get_structs(code)
 
       assert structs == [
-        struct: [
-          name: "connect_open_args",
-          fields: [["remote_string", "name"], ["unsigned", "int", "flags"]]
-        ]
-      ]
+               struct: [
+                 name: "connect_open_args",
+                 fields: [["remote_string", "name"], ["unsigned", "int", "flags"]]
+               ]
+             ]
     end
 
     test "remote_node_get_cpu_stats_ret - using a list" do
@@ -150,17 +150,17 @@ defmodule Libvirt.RPC.CallParserTest do
       structs = get_structs(code)
 
       assert structs == [
-        struct: [
-          name: "node_get_cpu_stats_ret",
-          fields: [
-            [
-              "remote_node_get_cpu_stats",
-              {:list, ["params", "REMOTE_NODE_CPU_STATS_MAX"]}
-            ],
-            ["int", "nparams"]
-          ]
-        ]
-      ]
+               struct: [
+                 name: "node_get_cpu_stats_ret",
+                 fields: [
+                   [
+                     "remote_node_get_cpu_stats",
+                     {:list, ["params", "REMOTE_NODE_CPU_STATS_MAX"]}
+                   ],
+                   ["int", "nparams"]
+                 ]
+               ]
+             ]
     end
 
     test "remote_domain_get_info_ret - mixed case" do
@@ -177,17 +177,17 @@ defmodule Libvirt.RPC.CallParserTest do
       structs = get_structs(code)
 
       assert structs == [
-        struct: [
-          name: "domain_get_info_ret",
-          fields: [
-            ["unsigned", "char", "state"],
-            ["unsigned", "hyper", "maxMem"],
-            ["unsigned", "hyper", "memory"],
-            ["unsigned", "short", "nrVirtCpu"],
-            ["unsigned", "hyper", "cpuTime"]
-          ]
-        ]
-      ]
+               struct: [
+                 name: "domain_get_info_ret",
+                 fields: [
+                   ["unsigned", "char", "state"],
+                   ["unsigned", "hyper", "maxMem"],
+                   ["unsigned", "hyper", "memory"],
+                   ["unsigned", "short", "nrVirtCpu"],
+                   ["unsigned", "hyper", "cpuTime"]
+                 ]
+               ]
+             ]
     end
   end
 end

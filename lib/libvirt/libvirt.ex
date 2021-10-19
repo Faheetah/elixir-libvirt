@@ -1,4 +1,4 @@
-defmodule Libvirt.RPC.Call do
+defmodule Libvirt do
   @moduledoc """
   These modules are generated from the Libvirt RPC spec.  See documentation for
   `Libvirt.RPC.CallGenerator` for information on how the code is generated.
@@ -38,7 +38,16 @@ defmodule Libvirt.RPC.Call do
   require Libvirt.RPC.CallGenerator
   Libvirt.RPC.CallGenerator.generate("6.0.0")
 
-  defp do_procedure(socket, id, stream_type, return_spec, payload \\ nil) do
+  def connect!(host) do
+    {:ok, socket} = Libvirt.RPC.connect(host)
+    socket
+  end
+
+  def connect(host) do
+    Libvirt.RPC.connect(host)
+  end
+
+  defp do_procedure(socket, id, stream_type, return_spec, payload \\ nil, writestream \\ nil) do
     packet = %Libvirt.RPC.Packet{
       # program is hard coded for Libvirt
       program: 0x20008086,
@@ -46,12 +55,22 @@ defmodule Libvirt.RPC.Call do
       version: 1,
       procedure: id,
       type: 0,
-      serial: 0,
+      serial: 1,
       status: 0,
       payload: payload
     }
-    Libvirt.RPC.send(socket, packet, stream_type)
-    |> receive_data(return_spec)
+
+    case stream_type do
+      nil ->
+        Libvirt.RPC.send(socket, packet, stream_type)
+        |> receive_data(return_spec)
+
+      "readstream" ->
+        Libvirt.RPC.send(socket, packet, stream_type)
+
+      "writestream" ->
+        Libvirt.RPC.send(socket, packet, stream_type, writestream)
+    end
   end
 
   defp receive_data({:ok, payload}, return_spec) do

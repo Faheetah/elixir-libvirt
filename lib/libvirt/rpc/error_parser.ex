@@ -44,15 +44,18 @@ defmodule Libvirt.RPC.ErrorParser do
     ignore(eventually(string("typedef enum {")))
     |> lookahead_not(string("virErrorNumber"))
 
-  defparsec :parse,
+  defparsec(
+    :parse,
     choice([find_enum, ignore_enum])
     |> repeat()
     |> concat(repeat(error))
+  )
 
   def parse_errors(version) do
-    rpc = Libvirt.RPC.RemoteAsset.fetch(version,  "include/libvirt/virterror.h")
+    rpc = Libvirt.RPC.RemoteAsset.fetch(version, "include/libvirt/virterror.h")
 
     {:ok, call_list, _, _, _, _} = Libvirt.RPC.ErrorParser.parse(rpc)
+
     call_list
     |> Enum.chunk_every(3)
   end
@@ -60,8 +63,9 @@ defmodule Libvirt.RPC.ErrorParser do
   defmacro generate(version) do
     Enum.map(parse_errors(version), fn [key, id, message] ->
       quote do
-      # def vir_error_number(3), do: {:VIR_ERR_NO_SUPPORT, "no support for this function"}
-        def vir_error_number(unquote(id)) when is_number(unquote(id)), do: unquote({String.to_atom(key), message})
+        # def vir_error_number(3), do: {:VIR_ERR_NO_SUPPORT, "no support for this function"}
+        def vir_error_number(unquote(id)) when is_number(unquote(id)),
+          do: unquote({String.to_atom(key), message})
       end
     end)
   end
