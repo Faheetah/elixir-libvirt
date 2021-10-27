@@ -15,9 +15,11 @@ defmodule Libvirt.RPC.Backends.Direct do
   end
 
   def connect(host) do
-    {:ok, socket} = :gen_tcp.connect(to_charlist(host), @tcp_port, [:binary, active: false])
-    Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
-    {:ok, socket}
+    with {:ok, socket} <- :gen_tcp.connect(to_charlist(host), @tcp_port, [:binary, active: false]),
+         {:ok, nil} <- Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
+    do
+      {:ok, socket}
+    end
   end
 
   def send(socket, packet, nil) do
