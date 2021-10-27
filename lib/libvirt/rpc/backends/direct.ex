@@ -14,9 +14,20 @@ defmodule Libvirt.RPC.Backends.Direct do
     socket
   end
 
-  def connect(host) do
+  def connect(host, name \\ "", flags \\ 0) do
+    payload = <<0, 0, 0, 1>> <> Libvirt.RPC.XDR.encode(%{"flags" => flags, "name" => name}, [["remote_string", "name"], ["unsigned", "int", "flags"]])
+    packet = %Libvirt.RPC.Packet{
+      program: 536903814,
+      version: 1,
+      procedure: 1,
+      type: 0,
+      serial: 2,
+      status: 0,
+      payload: payload
+    }
+
     with {:ok, socket} <- :gen_tcp.connect(to_charlist(host), @tcp_port, [:binary, active: false]),
-         {:ok, nil} <- Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
+         {:ok, nil} <- send(socket, packet, nil)
     do
       {:ok, socket}
     end
