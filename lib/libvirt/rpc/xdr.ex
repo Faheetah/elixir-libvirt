@@ -107,6 +107,22 @@ defmodule Libvirt.RPC.XDR do
   def translate(:decode, ["unsigned", "short", name], <<int::32, rest::binary>>),
     do: {name, int, rest}
 
+  def translate(:encode, ["unsigned", "int", "flags"], map) do
+    case map["flags"] do
+      0 ->
+        <<0, 0, 0, 0, 0>>
+
+      int when int <= 255 ->
+        <<0, 0, 0, 1, int::unsigned-integer-size(8)>>
+
+      int when int <= 65535 ->
+        <<0, 0, 0, 2, int::unsigned-integer-size(16)>>
+
+      int ->
+        {:error, "unable to parse flag, please report this: #{int}"}
+    end
+  end
+
   def translate(:encode, ["unsigned", "int", name], map) do
     int = map[name]
 
