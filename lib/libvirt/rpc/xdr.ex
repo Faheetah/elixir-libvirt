@@ -65,7 +65,7 @@ defmodule Libvirt.RPC.XDR do
 
     Enum.join(
       [
-        "Error decoding spec:",
+        "Error parsing spec:",
         "      spec:\n        [#{bad_args}]",
         "      payload:\n#{payload_string}",
         "#{original_error}"
@@ -75,6 +75,7 @@ defmodule Libvirt.RPC.XDR do
   end
 
   # a nil is a nil regardless of type
+  # might need better checks here?
   def translate(:encode, _, nil), do: <<>>
 
   def translate(:decode, [_, {:list, [name, _max]}], <<0, 0, 0, 0, rest::binary>>) do
@@ -99,13 +100,38 @@ defmodule Libvirt.RPC.XDR do
   end
 
   def translate(:encode, ["int", name], map) do
-    <<map[name]::integer-size(32)>>
+    case Map.get(map, name) do
+      nil ->
+        keys =
+          map
+          |> Map.keys()
+          |> Enum.join(", ")
+
+        throw "Key '#{name}' not found in map keys: [#{keys}]"
+      val -> <<val::integer-size(32)>>
+    end
   end
 
   def translate(:decode, ["int", name], <<int::32, rest::binary>>), do: {name, int, rest}
 
   def translate(:decode, ["unsigned", "short", name], <<int::32, rest::binary>>),
     do: {name, int, rest}
+
+  def translate(:encode, ["unsigned", "int", "flags"], map) do
+    case map["flags"] do
+      0 ->
+        <<0, 0, 0, 0, 0>>
+
+      int when int <= 255 ->
+        <<0, 0, 0, 1, int::unsigned-integer-size(8)>>
+
+      int when int <= 65535 ->
+        <<0, 0, 0, 2, int::unsigned-integer-size(16)>>
+
+      int ->
+        {:error, "unable to parse flag, please report this: #{int}"}
+    end
+  end
 
   def translate(:encode, ["unsigned", "int", name], map) do
     int = map[name]

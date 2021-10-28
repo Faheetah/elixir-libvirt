@@ -14,10 +14,23 @@ defmodule Libvirt.RPC.Backends.Direct do
     socket
   end
 
-  def connect(host) do
-    {:ok, socket} = :gen_tcp.connect(to_charlist(host), @tcp_port, [:binary, active: false])
-    Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
-    {:ok, socket}
+  def connect(host, name \\ "", flags \\ 0) do
+    payload = <<0, 0, 0, 1>> <> Libvirt.RPC.XDR.encode(%{"flags" => flags, "name" => name}, [["remote_string", "name"], ["unsigned", "int", "flags"]])
+    packet = %Libvirt.RPC.Packet{
+      program: 536903814,
+      version: 1,
+      procedure: 1,
+      type: 0,
+      serial: 2,
+      status: 0,
+      payload: payload
+    }
+
+    with {:ok, socket} <- :gen_tcp.connect(to_charlist(host), @tcp_port, [:binary, active: false]),
+         {:ok, nil} <- send(socket, packet, nil)
+    do
+      {:ok, socket}
+    end
   end
 
   def send(socket, packet, nil) do
@@ -28,13 +41,18 @@ defmodule Libvirt.RPC.Backends.Direct do
     :ok = :gen_tcp.send(socket, Packet.encode_packet(packet))
     {:ok, <<size::32>>} = :gen_tcp.recv(socket, 4)
     {:ok, rest} = :gen_tcp.recv(socket, size - 4)
-    {:ok, packet} = Packet.decode(<<size::32>> <> rest)
 
-    Logger.debug(
-      "#{inspect(socket)}:1:#{@call_type[packet.type]}:#{packet.size}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect(packet.payload)}"
-    )
+    case Packet.decode(<<size::32>> <> rest) do
+      {:ok, packet} ->
+        Logger.debug(
+          "#{inspect(socket)}:1:#{@call_type[packet.type]}:#{packet.size}:#{Libvirt.RPC.Translation.proc_to_name(packet.procedure)} #{@call_status[packet.status]} #{inspect(packet.payload)}"
+        )
 
-    {:ok, packet.payload}
+        {:ok, packet.payload}
+
+      x ->
+        x
+    end
   end
 
   def send(socket, packet, "readstream") do
