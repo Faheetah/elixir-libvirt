@@ -139,7 +139,7 @@ defmodule Libvirt.RPC.XDR do
     if int <= 4_294_967_295 and int >= 0 do
       <<int::unsigned-integer-size(32)>>
     else
-      {:error, "unsigned integer must be 32 bit and non negative"}
+      {:error, "unsigned integer must be 32 bit and non negative: #{name}"}
     end
   end
 
@@ -153,7 +153,7 @@ defmodule Libvirt.RPC.XDR do
     if int <= 18_446_744_073_709_551_615 and int >= 0 do
       <<int::unsigned-integer-size(64)>>
     else
-      {:error, "unsigned hyper must be 64 bit and non negative"}
+      {:error, "unsigned hyper must be 64 bit and non negative: #{name}"}
     end
   end
 
