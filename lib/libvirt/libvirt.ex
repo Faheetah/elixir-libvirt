@@ -43,9 +43,8 @@ defmodule Libvirt do
     socket
   end
 
-  def connect(host) do
-    Libvirt.RPC.connect(host)
-  end
+  def connect(host), do: Libvirt.RPC.connect(host)
+  def connect(host, backend), do: Libvirt.RPC.connect(host, backend)
 
   defp do_procedure(socket, id, stream_type, return_spec, payload \\ nil, writestream \\ nil) do
     packet = %Libvirt.RPC.Packet{
