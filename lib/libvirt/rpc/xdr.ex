@@ -4,20 +4,28 @@ defmodule Libvirt.RPC.XDR do
   def encode(nil, _), do: nil
 
   def encode(payload, spec) do
-    Enum.map(spec, fn arg ->
-      try do
-        translate(:encode, arg, payload)
-      rescue
-        # specifically for encode/decode errors
-        error in ArgumentError ->
-          reraise format_error(arg, payload, error), __STACKTRACE__
+    results =
+      Enum.map(spec, fn arg ->
+        try do
+          translate(:encode, arg, payload)
+        rescue
+          # specifically for encode/decode errors
+          error in ArgumentError ->
+            reraise format_error(arg, payload, error), __STACKTRACE__
 
-        error in FunctionClauseError ->
-          reraise format_error(arg, payload, error), __STACKTRACE__
-      end
-    end)
-    |> Enum.join()
+          error in FunctionClauseError ->
+            reraise format_error(arg, payload, error), __STACKTRACE__
+        end
+      end)
+
+    case Enum.filter(results, &filter_error/1) do
+      [] -> Enum.join(results)
+      errors -> throw Enum.join(Enum.map(errors, fn {:error, error} -> error end), "\n")
+    end
   end
+
+  defp filter_error({:error, error}), do: error
+  defp filter_error(_), do: nil
 
   def decode(nil, _), do: nil
 
@@ -129,7 +137,7 @@ defmodule Libvirt.RPC.XDR do
         <<0, 0, 0, 2, int::unsigned-integer-size(16)>>
 
       int ->
-        {:error, "unable to parse flag, please report this: #{int}"}
+        {:error, "unable to parse flag: #{inspect int}, ensure a valid flag is passed in with the map with a valid integer"}
     end
   end
 
