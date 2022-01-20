@@ -10,6 +10,8 @@ defmodule Libvirt.RPC.Backends.Test do
   end
 
   def connect(host) do
+    # this doesn't work in context of concurrent applications, since the process
+    # will die
     socket = Process.get(:socket)
     if socket do
       {:ok, socket}
