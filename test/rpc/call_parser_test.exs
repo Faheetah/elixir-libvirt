@@ -189,5 +189,37 @@ defmodule Libvirt.RPC.CallParserTest do
                ]
              ]
     end
+
+    test "remote_node_get_info_ret - edge case unknown" do
+      code = """
+      struct remote_node_get_info_ret { /* insert@1 */
+          char model[32];
+          unsigned hyper memory;
+          int cpus;
+          int mhz;
+          int nodes;
+          int sockets;
+          int cores;
+          int threads;
+      };
+      """
+
+      structs = get_structs(code)
+      assert structs == [
+        struct: [
+          name: "node_get_info_ret",
+          fields: [
+            ["char", "model"],
+            ["unsigned", "hyper", "memory"],
+            ["int", "cpus"],
+            ["int", "mhz"],
+            ["int", "nodes"],
+            ["int", "sockets"],
+            ["int", "cores"],
+            ["int", "threads"]
+          ]
+        ]
+      ]
+    end
   end
 end
