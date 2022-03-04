@@ -90,6 +90,36 @@ defmodule Libvirt.RPC.XDR do
     {name, [], rest}
   end
 
+  # ensuring that the char length matches the spec
+  def translate(:encode, ["char", {:char, [name, length]}], data) do
+    IO.inspect String.length(data)
+    if String.length(data)*4 == length do
+      data
+    else
+      throw "Char encoded with wrong length: #{name}"
+    end
+  end
+
+  def translate(:decode, ["char", {:char, [name, length]}], data) do
+    {length, _} = Integer.parse(length)
+
+    {char, rest} =
+      Enum.reduce(
+        1..length,
+        {"", data},
+        fn _, {chars, <<c::32, rest::binary>>} ->
+          if c == 0 do
+            {chars, rest}
+          else
+            {chars <> <<c>>, rest}
+          end
+        end
+      )
+
+    {name, char, rest}
+    |> IO.inspect
+  end
+
   def translate(:decode, [type, {:list, [name, _max]}], <<count::32, items::binary>>) do
     # 1..count because count includes itself, a count of 55 will include 54 total list elements
     {val, rest} =
