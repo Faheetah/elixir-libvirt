@@ -120,7 +120,7 @@ defmodule Libvirt.RPC.Spec do
   def field(["remote_domain", name]), do: field(["remote_nonnull_domain", name])
 
   def field(["remote_nonnull_domain", name]) do
-    {name, quote(do: %{name: String.t(), uuid: String.t()})}
+    {name, quote(do: %{name: String.t(), uuid: String.t(), id: integer()})}
   end
 
   def field(["remote_network", name]), do: field(["remote_nonnull_network", name])
