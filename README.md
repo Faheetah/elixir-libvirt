@@ -4,26 +4,18 @@ A simple Libvirt RPC client in pure Elixir.
 
 Note: there are a few caveats to using this library:
 
-* It is in a pre-release state, while basic functionality appears to work the library may be prone to bugs pre-1.0
-* It is a personal project of mine and may never be production ready, however demonstrates some useful concepts with Elixir
-* While there is a pooled connection option (Shared), only Direct is currently supported, and Shared may be dropped in the future
-* The XDR translations are incomplete, or in other words, if you find a bad value on send or receive, it may be a type missing from Libvirt.RPC.XDR, I have been adding these on an as needed basis
-* I don't understand flags, and they appear to be used in some places, but unused in many, but flags can be passed in directly with the struct
-* The API is a bit verbose as it is a direct 1:1 of the Libvirt code, this is intentional
-* Streams may be unreliable, though appear to work fine in concurrent environments with Direct mode, however Direct mode will instantiate a new TCP session per connection but due to Elixir's concurrency model this should not be that big of a problem
+* It is in a pre-release state, while basic functionality appears to work the library may be prone to bugs pre-1.0.
+* It is a personal project of mine and may never be production ready, however demonstrates some useful concepts with Elixir.
+* While there is a pooled connection option (Shared), only Direct is currently supported, and Shared may be dropped in the future.
+* The XDR translations are incomplete, or in other words, if you find a bad value on send or receive, it may be a type missing from Libvirt.RPC.XDR, I have been adding these on an as needed basis.
+* I don't understand flags, and they appear to be used in some places, but unused in many, but flags can be passed in directly with the struct.
+* The API is a bit verbose as it is a direct 1:1 of the Libvirt code, this is intentional.
+* Streams may be unreliable, though appear to work fine in concurrent environments with Direct mode, however Direct mode will instantiate a new TCP session per connection but due to Elixir's concurrency model this should not be that big of a problem.
+* Console is NOT supported due to needing bidirectional streams. This was not initially accounted for and will need a reimplementation of stream handling.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `libvirt` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:libvirt, "~> 0.1.0"}
-  ]
-end
-```
+This repo is not currently available in Hex as it is an unstable version. Hex can pull directly from git or local filesystem as an alternative installation method.
 
 ## Use
 
