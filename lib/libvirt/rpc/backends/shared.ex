@@ -25,16 +25,22 @@ defmodule Libvirt.RPC.Backends.Shared do
   @call_type %{0 => "call", 1 => "reply", 2 => "event", 3 => "stream"}
   @call_status %{0 => "ok", 1 => "error", 2 => "continue"}
 
+  def connect(host) do
+    GenServer.call(host, :get_socket)
+  end
+
   def send(pid, packet, stream_type) do
     GenServer.call(pid, {:send, packet, stream_type})
   end
 
   def start_link(host, name \\ nil) do
+    Logger.debug("connecting to #{host}")
+
     {:ok, socket} =
       GenServer.start_link(
         __MODULE__,
         %{host: to_charlist(host), socket: nil, serial: 1, requests: %{}},
-        name: name
+        name: name || host
       )
 
     Libvirt.connect_open(socket, %{"name" => "", "flags" => 0})
@@ -52,6 +58,10 @@ defmodule Libvirt.RPC.Backends.Shared do
   end
 
   @impl true
+  def handle_cast(:get_socket, state) do
+    {:noreply, state.socket}
+  end
+
   def handle_cast({:receive, "readstream"}, state) do
     {:ok, <<size::32>>} = :gen_tcp.recv(state.socket, 4)
     {:ok, rest} = :gen_tcp.recv(state.socket, size - 4)
