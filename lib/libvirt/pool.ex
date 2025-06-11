@@ -42,4 +42,12 @@ defmodule Libvirt.Pool do
     # and use destroy! to force wipe all volumes
     Libvirt.storage_pool_destroy(socket, %{"pool" => pool})
   end
+
+  def undefine(socket, pool) do
+    Libvirt.storage_pool_undefine(socket, %{"pool" => pool})
+  end
+
+  def delete(socket, pool) do
+    Libvirt.storage_pool_delete(socket, %{"pool" => pool, "flags" => 0})
+  end
 end

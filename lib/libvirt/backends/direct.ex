@@ -89,7 +89,7 @@ defmodule Libvirt.Backends.Direct do
         end
       end,
       fn socket ->
-        Libvirt.connect_close(socket)
+        nil
       end
     )
   end
@@ -111,7 +111,5 @@ defmodule Libvirt.Backends.Direct do
     Enum.each(stream, fn chunk ->
       :gen_tcp.send(socket, Packet.encode_packet(%{packet | type: 3, status: 2, payload: chunk}))
     end)
-
-    Libvirt.connect_close(socket)
   end
 end

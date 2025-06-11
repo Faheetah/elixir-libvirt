@@ -1,5 +1,5 @@
 Logger.configure(level: :info)
-hv = "colosseum.sudov.im"
+hv = "localhost"
 
 vol = %{
   "key" => "/home/main/libvirt/test/user-data.yaml",
@@ -17,14 +17,6 @@ Benchee.run(
     "Libvirt.Network.list_all" => fn ->
       Libvirt.Backends.Direct.connect!(hv)
       |> Libvirt.Network.list_all()
-    end,
-    "Libvirt.Volume.download! small" => fn ->
-      Libvirt.Backends.Direct.connect!(hv)
-      |> Libvirt.Volume.download!(vol, "/dev/null")
-    end,
-    "Libvirt.Volume.Download! big download separate" => fn ->
-      Libvirt.Backends.Direct.connect!(hv)
-      |> Libvirt.Volume.download!(big_vol, "/dev/null")
     end,
   }, parallel: 8
 )

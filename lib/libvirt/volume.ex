@@ -20,10 +20,7 @@ defmodule Libvirt.Volume do
   end
 
   def lookup_by_name(socket, pool, name) do
-    {:ok, %{"remote_nonnull_storage_vol" => vol}} =
-      Libvirt.storage_vol_lookup_by_name(socket, %{"pool" => pool, "name" => name})
-
-    {:ok, vol}
+    Libvirt.storage_vol_lookup_by_name(socket, %{"pool" => pool, "name" => name})
   end
 
   def lookup_by_path(socket, path) do
@@ -61,16 +58,16 @@ defmodule Libvirt.Volume do
   def create(socket, %__MODULE__{} = volume) do
     xml = """
     <volume>
-    ​  <name>#{volume.name}</name>
-    ​  <allocation>0</allocation>
-    ​  <capacity unit="#{volume.unit}">#{volume.capacity}</capacity>
-    ​  <target>
-    ​    <path>#{volume.path}</path>
-    ​    <permissions>
-    ​      <mode>#{volume.mode}</mode>
-    ​    </permissions>
-    ​  </target>
-    ​</volume>
+      <name>#{volume.name}</name>
+      <allocation>0</allocation>
+      <capacity unit="#{volume.unit}">#{volume.capacity}</capacity>
+      <target>
+        <path>#{volume.path}</path>
+        <permissions>
+          <mode>#{volume.mode}</mode>
+        </permissions>
+      </target>
+    </volume>
     """
 
     {:ok, %{"remote_nonnull_storage_pool" => pool}} =
@@ -79,13 +76,17 @@ defmodule Libvirt.Volume do
     Libvirt.storage_vol_create_xml(socket, %{"pool" => pool, "xml" => xml, "flags" => 0})
   end
 
+  def delete(socket, volume) do
+    Libvirt.storage_vol_delete(socket, %{"vol" => volume, "flags" => 0})
+  end
+
   def upload(socket, %__MODULE__{} = volume, file: file) do
     stream = File.stream!(file, [], 262_148)
     upload(socket, volume, stream)
   end
 
   def upload(socket, %__MODULE__{capacity: capacity} = volume, stream)
-      when not is_nil(capacity) do
+  when not is_nil(capacity) do
     vol_data = %{"key" => volume.path, "name" => volume.name, "pool" => volume.pool}
 
     Libvirt.storage_vol_upload(

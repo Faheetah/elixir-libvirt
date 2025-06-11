@@ -1,3 +1,3 @@
 import Config
 
-config :libvirt, :rpc, backend: Libvirt.Backends.Test
+config :libvirt, :rpc, backend: Libvirt.Backends.Direct
