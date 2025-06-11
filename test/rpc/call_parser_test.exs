@@ -209,7 +209,7 @@ defmodule Libvirt.RPC.CallParserTest do
         struct: [
           name: "node_get_info_ret",
           fields: [
-            ["char", "model"],
+            ["char", "model", "32"],
             ["unsigned", "hyper", "memory"],
             ["int", "cpus"],
             ["int", "mhz"],
