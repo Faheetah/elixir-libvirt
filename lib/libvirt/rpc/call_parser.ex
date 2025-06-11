@@ -77,8 +77,7 @@ defmodule Libvirt.RPC.CallParser do
         utf8_string([?a..?z, ?_], min: 1)
         |> ignore(string("["))
         |> utf8_string([?A..?Z, ?0..?9, ?_], min: 1)
-        |> ignore(string("]"))
-        |> tag(:char),
+        |> ignore(string("]")),
         utf8_string([?a..?z, ?A..?Z, ?_], min: 1)
       ])
     )

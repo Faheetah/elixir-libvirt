@@ -91,7 +91,7 @@ defmodule Libvirt.RPC.XDR do
   end
 
   # ensuring that the char length matches the spec
-  def translate(:encode, ["char", {:char, [name, length]}], data) do
+  def translate(:encode, ["char", name, length], data) do
     if String.length(data)*4 == length do
       data
     else
@@ -99,7 +99,7 @@ defmodule Libvirt.RPC.XDR do
     end
   end
 
-  def translate(:decode, ["char", {:char, [name, length]}], data) do
+  def translate(:decode, ["char", name, length], data) do
     {length, _} = Integer.parse(length)
 
     {char, rest} =

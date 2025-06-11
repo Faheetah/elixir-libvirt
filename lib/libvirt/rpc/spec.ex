@@ -85,7 +85,7 @@ defmodule Libvirt.RPC.Spec do
   def map_field(:unknown), do: quote(do: any())
 
   # for characters with a specified length, i.e. char model[32]
-  def field(["char", {:char, [name, _length]}]), do: {name, quote(do: String.t)}
+  def field(["char", name, _length]), do: {name, quote(do: String.t)}
 
   # lists for primitives
   # ["unsigned", "int", {:list, ["keycodes", "REMOTE_DOMAIN_SEND_KEY_MAX"]}]}
