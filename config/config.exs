@@ -3,6 +3,6 @@ import Config
 config :logger,
   backends: [:console]
 
-config :libvirt, :rpc, backend: Libvirt.RPC.Backends.Direct
+config :libvirt, :rpc, backend: Libvirt.Backends.Direct
 
 import_config "#{config_env()}.exs"

@@ -7,7 +7,7 @@ defmodule Libvirt.Application do
   def start(_type, _args) do
     children =
       case Application.get_env(:libvirt, :rpc) |> Keyword.get(:backend) do
-        Libvirt.RPC.Backends.Shared -> [Libvirt.RPC.Backends.HypervisorSupervisor]
+        Libvirt.Backends.Shared -> [Libvirt.Backends.HypervisorSupervisor]
         _ -> []
       end
 

@@ -1,4 +1,4 @@
-defmodule Libvirt.RPC.Backends.Shared do
+defmodule Libvirt.Backends.Shared do
   @moduledoc """
   Libvirt RPC communication using the Libvirt RPC protocol
 

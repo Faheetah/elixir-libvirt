@@ -70,3 +70,16 @@ iex(3)> h Libvirt.connect_list_all_domains
 
 Calls connect_list_all_domains using Libvirt RPC
 ```
+
+## Development
+
+Install libvirt for the sandbox environment.
+
+### Ubuntu
+
+```
+apt install libvirt-daemon libvirt-daemon-system libvirt-daemon-system-systemd
+systemctl start libvirtd-tcp.socket
+```
+
+Libvirt will listen locally on 16509. The Libvirt mock environment can be accessed with test:///default using localhost.

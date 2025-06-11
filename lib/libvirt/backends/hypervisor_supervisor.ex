@@ -1,13 +1,13 @@
-defmodule Libvirt.RPC.Backends.HypervisorSupervisor do
+defmodule Libvirt.Backends.HypervisorSupervisor do
   @moduledoc false
 
   use DynamicSupervisor
 
-  alias Libvirt.RPC.Backends.HypervisorRegistry
+  alias Libvirt.Backends.HypervisorRegistry
 
   def start_link(_init_arg) do
     DynamicSupervisor.start_link(__MODULE__, :no_args, name: __MODULE__)
-    Registry.start_link(keys: :unique, name: Libvirt.RPC.Backends.HypervisorRegistry)
+    Registry.start_link(keys: :unique, name: Libvirt.Backends.HypervisorRegistry)
   end
 
   @impl true
@@ -19,7 +19,7 @@ defmodule Libvirt.RPC.Backends.HypervisorSupervisor do
     case Registry.lookup(HypervisorRegistry, name) do
       [] ->
         {:ok, pid} =
-          DynamicSupervisor.start_child(__MODULE__, {Libvirt.RPC.Backends.Shared, name})
+          DynamicSupervisor.start_child(__MODULE__, {Libvirt.Backends.Shared, name})
 
         Registry.register(HypervisorRegistry, name, pid)
         {:ok, pid}
@@ -31,7 +31,7 @@ defmodule Libvirt.RPC.Backends.HypervisorSupervisor do
           Registry.unregister(HypervisorRegistry, name)
 
           {:ok, pid} =
-            DynamicSupervisor.start_child(__MODULE__, {Libvirt.RPC.Backends.Shared, name})
+            DynamicSupervisor.start_child(__MODULE__, {Libvirt.Backends.Shared, name})
 
           Registry.register(HypervisorRegistry, name, pid)
           {:ok, pid}

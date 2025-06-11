@@ -3,7 +3,7 @@ defmodule Libvirt.Hypervisor do
 
   defstruct [:id, :hostname]
 
-  alias Libvirt.RPC.Backends.{HypervisorRegistry, HypervisorSupervisor}
+  alias Libvirt.Backends.{HypervisorRegistry, HypervisorSupervisor}
 
   def list_hypervisors() do
     Registry.select(HypervisorRegistry, [{{:"$1", :_, :_}, [], [:"$1"]}])
